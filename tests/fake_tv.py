@@ -61,7 +61,7 @@ def _clock(sec):
 
 
 class FakeTV:
-    def __init__(self, duration=10.0, speed=25.0, load_delay=0.03):
+    def __init__(self, duration=10.0, speed=12.5, load_delay=0.03):
         self.duration = duration  # seconds every clip claims to last
         self.speed = speed  # clip seconds per real second
         self.load_delay = load_delay  # real seconds spent on "loading" after Play

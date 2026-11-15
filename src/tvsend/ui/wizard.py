@@ -1,6 +1,7 @@
 """The first-run setup: choose the TV, test the connection, choose the folder, learn the keys."""
 
 import os
+import sys
 import threading
 
 from rich.text import Text
@@ -21,10 +22,27 @@ STEPS = ["Choose your TV", "Connection test", "Choose your video folder", "Keys"
 NOTHING_FOUND = """No TV found. The usual reasons:
 
   • the TV is switched off or in deep standby
-  • the TV and this computer are on different networks (for example a guest Wi-Fi)
+  • the TV and this computer are on different networks (for example a guest Wi-Fi, or a VPN
+    on this computer)
   • the TV's "DLNA", "media sharing" or "allow devices to connect" setting is off
+  • a firewall on this computer hides the TVs' answers to the search
 
-Press r to search again, or m to type the TV's address."""
+If the TV is on, typing its address usually works even behind a firewall: press m. The
+address is shown in the TV's network settings (it looks like 192.168.1.20).
+Press r to search again."""
+
+# macOS 15 and later ask once whether the terminal app may reach devices on the local
+# network; if that was denied, nothing on the home network answers.
+MAC_LOCAL_NETWORK = """
+
+On a Mac: the terminal app needs permission to reach devices on your network. Check
+System Settings › Privacy & Security › Local Network, switch your terminal app on, then
+press r."""
+
+SEARCHING = """Looking on your network…
+
+This takes a few seconds: first one question to the whole network, then, if nothing
+answers, each address near this computer is asked directly."""
 
 KEYS = """You are ready. These keys are all you need:
 
@@ -281,14 +299,14 @@ class SetupWizard(App):
             current = self.tv.id if self.tv else None
             box.highlighted = ids.index(current) if current in ids else min(keep or 0, len(ids) - 1)
         if self.searching:
-            status.update("Looking on your network…")
+            status.update(SEARCHING if not self.found else "Looking on your network…")
         elif self.found:
             status.update(
                 "Found %d TV%s. Choose the one to send videos to."
                 % (len(self.found), "" if len(self.found) == 1 else "s")
             )
         else:
-            status.update(NOTHING_FOUND)
+            status.update(NOTHING_FOUND + (MAC_LOCAL_NETWORK if sys.platform == "darwin" else ""))
 
     def choose_tv(self):
         box = self.query_one("#tvs", OptionList)

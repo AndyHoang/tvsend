@@ -49,6 +49,20 @@ def local_ip_for(address: str) -> str:
         s.close()
 
 
+def lan_ip() -> str:
+    """This computer's address on the home network: the interface that network-wide
+    (multicast) messages leave from, else the one the default route uses. Raises OSError
+    when the computer is on no network."""
+    for target in (SSDP_GROUP, "192.0.2.1"):
+        try:
+            ip = local_ip_for(target)
+        except OSError:
+            continue
+        if ip and not ip.startswith(("0.", "127.")):
+            return ip
+    raise OSError("this computer is not on a network")
+
+
 def _local(tag: str) -> str:
     return tag.rsplit("}", 1)[-1]
 
@@ -101,12 +115,21 @@ def _locations(timeout: float, address: str | None, source_port: int = 0) -> lis
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
     found: list[str] = []
     try:
-        if source_port:
+        try:
+            local = local_ip_for(address) if address else lan_ip()
+        except OSError:
+            local = ""
+        if source_port and local:
             try:  # this computer's one LAN address, and the port a firewall rule can name
-                sock.bind((local_ip_for(address or SSDP_GROUP), source_port))
+                sock.bind((local, source_port))
             except OSError:
                 pass  # port busy: an automatic port still works where no firewall is in the way
-        sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, 2)
+        try:
+            sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, 2)
+            if local and not address:  # macOS/BSD pick the interface by this, not by the bound address
+                sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_IF, socket.inet_aton(local))
+        except OSError:
+            pass
         dest = (address or SSDP_GROUP, SSDP_PORT)
         mx = max(1, min(int(timeout) - 1, 3))
         for _ in range(2):  # UDP may lose a packet: ask twice
@@ -184,7 +207,10 @@ def search(
 ) -> list[TV]:
     """Look for TVs that accept video. `address` asks one device only. With `deep`, when
     SSDP finds nothing the known description addresses are tried as well."""
-    locations = _locations(timeout, address, source_port)
+    try:
+        locations = _locations(timeout, address, source_port)
+    except OSError:  # no network, or the system refused the search: the direct way may still work
+        locations = []
     tvs: list[TV] = []
     if locations:
         with ThreadPoolExecutor(max_workers=8) as pool:
@@ -195,7 +221,7 @@ def search(
                 tv = probe_address(socket.gethostbyname(address))
                 tvs = [tv] if tv else []
             else:
-                tvs = probe_network(local_ip_for(SSDP_GROUP))
+                tvs = probe_network(lan_ip())
         except OSError:
             pass
     return _unique(tvs)

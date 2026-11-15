@@ -6,7 +6,8 @@ the right section.
 
 ## In progress
 
-- [ ] macOS review of the code and fixing what the CI run on macOS reports
+- [ ] Check on a real Mac: Local Network permission, the "accept incoming connections"
+      window, the firewall apply step in setup, folder-access prompts
 
 ## To do: app
 

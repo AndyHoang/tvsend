@@ -68,6 +68,9 @@ def run_doctor(cfg: Config) -> int:
     else:
         _line("TV answers", "NO - switched off, in deep standby, on another network, or its address changed")
         problems += 1
+        if sys.platform == "darwin":
+            print(" " * 19 + "on a Mac also check System Settings > Privacy & Security > Local Network:")
+            print(" " * 19 + "the terminal app must be switched on there")
 
     # ---- this computer
     local_ip = ""

@@ -236,8 +236,10 @@ def explain(kind: str) -> str:
         return "This lets only your TV reach only tvsend's port, and keeps the rule after a restart."
     if kind == "macos":
         return (
-            "The macOS firewall decides per program, not per port. This allows incoming "
-            "connections for the tvsend program only."
+            "The macOS firewall decides per program, not per port. macOS may have shown a window "
+            'asking whether "%s" may accept incoming connections: choose Allow there and test '
+            "again. If no window appeared, or Deny was chosen, the command below allows incoming "
+            "connections for that one program." % os.path.basename(sys.executable)
         )
     if kind == "none":
         return (

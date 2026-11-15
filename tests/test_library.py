@@ -21,8 +21,9 @@ def test_scan_is_recursive_and_sorted_by_name(videos):
 
 
 def test_scan_lists_all_common_types(tmp_path):
-    for ext in ("mp4", "m4v", "mov", "mkv", "webm", "avi", "ts", "MP4", "MkV"):
-        make_video(tmp_path / ("clip_%s.%s" % (ext, ext)))
+    # numbered names: on a file system that ignores case (macOS) "x.mp4" and "x.MP4" are one file
+    for i, ext in enumerate(("mp4", "m4v", "mov", "mkv", "webm", "avi", "ts", "MP4", "MkV")):
+        make_video(tmp_path / ("clip%d.%s" % (i, ext)))
     for other in ("notes.txt", "song.mp3", "picture.jpg", "mp4", "clip.mp4.part"):
         make_video(tmp_path / other)
     entries, _ = library.scan(str(tmp_path))
