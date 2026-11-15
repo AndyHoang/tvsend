@@ -46,10 +46,9 @@ Parked on the branch `wip/background-player` (unfinished, untested).
 
 ## To do: release
 
-- [ ] Build and try the macOS binaries (Apple Silicon and Intel) and Linux arm64;
-      only Linux x86_64 has been built
-- [ ] First release: Actions -> Release -> Run workflow with `current` (0.1.0). The
-      workflow has never run to the end; watch the first run
+- [ ] Try the released binaries on real machines: macOS Apple Silicon, macOS Intel,
+      Linux arm64 (all four build and start on GitHub's machines; only Linux x86_64
+      was also started locally)
 - [ ] Later: register a Homebrew tap and the AUR package `tvsend-bin`, then put their
       jobs back into the release workflow and their lines back into the README
       (templates are in `packaging/homebrew` and `packaging/aur`)
@@ -57,7 +56,6 @@ Parked on the branch `wip/background-player` (unfinished, untested).
 - [ ] Rewrite the README parts that describe the background player as available, and
       remove the "first test version" note
 - [ ] Fill in the contact address in `CODE_OF_CONDUCT.md`
-- [ ] Set the `0.1.0` date in `CHANGELOG.md`
 - [ ] Switch the repository to public; then turn on private vulnerability reporting
       (needed by `SECURITY.md`) and check that `install.sh` and `tvsend update` work
       without a login
@@ -80,6 +78,8 @@ Parked on the branch `wip/background-player` (unfinished, untested).
 - [x] 92 tests against a fake TV
 - [x] Private repository `AndyHoang/tvsend` with the first test version
 - [x] List keys: `f` choose folder, `Backspace` up, `h` saved folder, `t` switch TV
+- [x] First release `v0.1.0` (private): four binaries and checksums published by the
+      Release workflow
 - [x] `tvsend reset`
 - [x] Release flow: version script, tag-driven release workflow, build-only run by hand
 - [x] Fix: player failed on Python 3.13 (`_thread._ThreadHandle object is not callable`)
