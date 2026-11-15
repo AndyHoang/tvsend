@@ -51,6 +51,25 @@ to a TV, please also say in the pull request which real TV you tried it on.
 - Keep pull requests small and about one thing. Add a line to `CHANGELOG.md` under
   "Unreleased" for anything a user would notice.
 
+## Versions and releases
+
+Versions follow [semantic versioning](https://semver.org): `MAJOR.MINOR.PATCH`, with
+`a1`, `b1` or `rc1` added for a pre-release (`0.2.0rc1`). The version lives in one
+place, `src/tvsend/__init__.py`, and every release is a git tag `v<version>`.
+
+- **Every push and pull request** runs the CI workflow: lint, and the tests on Python
+  3.10 to 3.14 on Linux and macOS.
+- **Trying the build without releasing:** on GitHub, Actions -> Release -> Run workflow
+  builds the four binaries and keeps them as artifacts for 5 days. Locally,
+  `sh packaging/build.sh` builds the one for your machine into `dist/`.
+- **Releasing** (maintainer):
+  1. Make sure `CHANGELOG.md` describes the changes under "Unreleased".
+  2. `uv run python packaging/release.py 0.2.0` sets the version, dates the changelog
+     section, runs lint and tests, commits and tags. `--dry-run` shows what it would do.
+  3. `git push origin main v0.2.0`. The pushed tag starts the Release workflow, which
+     builds the binaries and publishes the GitHub Release with checksums and the
+     changelog section as notes.
+
 ## Adding support for another kind of TV
 
 TV protocols live in `src/tvsend/backends/`. A back-end implements the small interface

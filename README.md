@@ -6,59 +6,46 @@ list, press Enter, and it plays on the TV.
 <!-- TODO(owner): replace this line with the terminal recording (GIF) once it is recorded. -->
 _Terminal recording: to be added._
 
-> **Status: first test version, not released.** There are no downloads yet; run it from
-> source with [uv](https://docs.astral.sh/uv/):
->
-> ```sh
-> git clone git@github.com:AndyHoang/tvsend.git && cd tvsend
-> uv run tvsend
-> ```
->
-> Not in this version, although described below: the background player. Closing tvsend
-> stops the TV, and an interrupted session is not continued. It is planned for a later
-> milestone, after first user feedback.
->
-> Extra keys in the list: `f` choose a folder, `Backspace` up one folder, `h` back to
-> the saved folder, `t` switch TV.
-
 ## Install
 
-tvsend is one file with everything inside. You do not need Python.
+tvsend is at an early test stage: there is no public release yet.
 
-**Install script** (Linux and macOS; puts `tvsend` in `~/.local/bin`):
-
-```sh
-curl -fsSL https://raw.githubusercontent.com/AndyHoang/tvsend/main/install.sh | sh
-```
-
-**Homebrew** (macOS and Linux):
+**From source** (works today; needs [uv](https://docs.astral.sh/uv/) and access to the
+repository):
 
 ```sh
-brew install AndyHoang/tap/tvsend
+git clone git@github.com:AndyHoang/tvsend.git && cd tvsend
+uv run tvsend
 ```
 
-**Arch Linux (AUR):**
+In the rest of this page, `tvsend` stands for `uv run tvsend` when you run from source.
 
-```sh
-yay -S tvsend-bin
-```
+**Standalone binary** (from the first public release on): one file with everything
+inside, no Python needed, for Linux (x86_64, arm64) and macOS (Apple Silicon, Intel).
 
-**Manual download:** take the file for your system from the
-[Releases page](https://github.com/AndyHoang/tvsend/releases), make it executable
-(`chmod +x tvsend`) and move it to a folder on your `PATH`. Each release lists SHA-256
-checksums.
+- Install script, which puts `tvsend` in `~/.local/bin`:
+
+  ```sh
+  curl -fsSL https://raw.githubusercontent.com/AndyHoang/tvsend/main/install.sh | sh
+  ```
+
+- Or take the file for your system from the
+  [Releases page](https://github.com/AndyHoang/tvsend/releases), make it executable
+  (`chmod +x tvsend`) and move it to a folder on your `PATH`. Each release lists
+  SHA-256 checksums.
 
 On macOS the binary is not signed. A file downloaded with a browser is blocked until
-you clear the block once:
+you clear the block once (the install script does not trigger this block):
 
 ```sh
 xattr -d com.apple.quarantine tvsend
 ```
 
-The install script and Homebrew do not trigger this block.
+To update a binary later: `tvsend update`.
 
-To update later: `tvsend update` (or your package manager, if you installed with
-Homebrew or the AUR).
+**Not in this version:** the background player. Closing tvsend stops the TV, and an
+interrupted session is not continued; parts of this page that say otherwise describe
+the plan. It comes in a later version, after first user feedback.
 
 ## Quick start
 

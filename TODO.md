@@ -48,9 +48,10 @@ Parked on the branch `wip/background-player` (unfinished, untested).
 
 - [ ] Build and try the macOS binaries (Apple Silicon and Intel) and Linux arm64;
       only Linux x86_64 has been built
-- [ ] First run of the release workflow with a `v0.1.0` tag
-- [ ] Create the Homebrew tap repository and its token secret
-- [ ] Create the AUR package `tvsend-bin` and its SSH key secret
+- [ ] First release: `uv run python packaging/release.py 0.1.0`, then push the tag
+- [ ] Later: register a Homebrew tap and the AUR package `tvsend-bin`, then put their
+      jobs back into the release workflow and their lines back into the README
+      (templates are in `packaging/homebrew` and `packaging/aur`)
 - [ ] Record the terminal demo and put it at the top of the README
 - [ ] Rewrite the README parts that describe the background player as available, and
       remove the "first test version" note
@@ -78,4 +79,6 @@ Parked on the branch `wip/background-player` (unfinished, untested).
 - [x] 92 tests against a fake TV
 - [x] Private repository `AndyHoang/tvsend` with the first test version
 - [x] List keys: `f` choose folder, `Backspace` up, `h` saved folder, `t` switch TV
+- [x] `tvsend reset`
+- [x] Release flow: version script, tag-driven release workflow, build-only run by hand
 - [x] Fix: player failed on Python 3.13 (`_thread._ThreadHandle object is not callable`)

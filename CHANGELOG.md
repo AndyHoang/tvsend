@@ -21,16 +21,16 @@ First version.
 - TVs are found on the home network by themselves (DLNA). Several TVs can be saved; a
   saved TV is recognised by its device ID when its address changes.
 - First-run setup in four steps: choose the TV, connection test with firewall help,
-  choose the video folder, key overview. `tvsend setup` repeats it.
+  choose the video folder, key overview. `tvsend setup` repeats it; `tvsend reset`
+  forgets all settings.
+- In the list: `f` chooses a folder, `Backspace` goes up one folder, `h` returns to the
+  saved folder, `t` switches TV.
 - `tvsend doctor` checks TV reachability, the file server and the firewall.
-- Background player: the queue keeps running after the list or the terminal is closed.
-  After an interruption the queue continues on the next start; a deliberate stop
-  clears it.
 - File server bound to one network address, serving only queued files under random
   tokens.
 - File types: mp4, m4v, mov, mkv, webm, avi, ts.
 - Standalone binaries for Linux (x86_64, arm64) and macOS (Apple Silicon, Intel),
-  install script, `tvsend update`, Homebrew tap and AUR package `tvsend-bin`.
+  install script, `tvsend update`.
 
 [Unreleased]: https://github.com/AndyHoang/tvsend/compare/v0.1.0...HEAD
 [0.1.0]: https://github.com/AndyHoang/tvsend/releases/tag/v0.1.0

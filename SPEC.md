@@ -45,7 +45,7 @@ the TV in under two minutes without reading documentation.
 | Subtitles | Not planned |
 | Onboarding | Full-screen 4-step wizard on first run; `tvsend setup` repeats it |
 | Firewall | Tested during setup. If blocked: show the exact command and, in first-time setup, offer to run it |
-| Install channels | GitHub Releases, install script, `tvsend update`, Homebrew tap, AUR `tvsend-bin` |
+| Install channels | GitHub Releases, install script, `tvsend update`. Homebrew tap and AUR `tvsend-bin` later, once they are registered (templates are kept in `packaging/`) |
 | Repo standards | README with demo and release automation first; CI, tests and community files in a later phase |
 
 ## 3. Commands
@@ -196,7 +196,8 @@ home addresses and names. What was taken from it:
 4. **Shipping.** PyInstaller builds, release workflow, install script, `tvsend update`,
    README with terminal recording, MIT licence, CHANGELOG. First private release,
    tested on Linux and macOS, then the repo goes public.
-5. **Channels.** Homebrew tap and AUR `tvsend-bin`, updated by the release workflow.
+5. **Channels (later).** Homebrew tap and AUR `tvsend-bin`, once registered; the release
+   workflow gets the two jobs back then.
 6. **Persistence (after user feedback).** Background player, local socket, saved
    session, automatic continue.
 7. **Project hygiene.** CI (ruff, pytest on Python 3.10-3.14, Linux and macOS, with a
