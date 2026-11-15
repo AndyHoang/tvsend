@@ -35,7 +35,7 @@ the TV in under two minutes without reading documentation.
 | `tvsend <dir>` | Shows only that folder, for this run. Saves nothing |
 | `tvsend <file>...` | Plays at once on the saved TV, no list. Several files form a queue |
 | `tvsend <url>` | Plays a direct video link (plain http(s) video file; not YouTube or similar sites) |
-| Persistence | Background player keeps the queue running after the app closes, plus a saved session |
+| Persistence | **Later milestone, after first user feedback.** Planned: a background player keeps the queue running after the app closes, plus a saved session. Version 1: playback stops when tvsend closes |
 | Reopen with a saved session, nothing playing | Continues the saved queue automatically, unless playback was stopped on purpose |
 | Deliberate stop | `s`, `tvsend stop` or Stop on the remote clears the saved session |
 | Saved folders | One |
@@ -95,11 +95,18 @@ Shown when no config exists. Each step has Back / Next; `q` leaves without savin
 - Kept from the personal tool: sort (`o` and column headers), filter (`/`),
   next/previous, restart, pause, stop, loop/once, marking clips with Space, automatic
   refresh of the folder, highlight follows the TV.
-- New: `t` switch TV, `f` change the saved folder, `?` key help, a status line that
-  always names the TV in use.
+- New: `t` switch TV, `f` choose a folder (a switch decides whether it becomes the saved
+  one), `Backspace` or `-` up one folder for this session, `h` back to the saved
+  folder, `?` key help, a status line that always names the TV in use and names the
+  folder whenever it is not the saved one.
 - A clip the TV refuses: one plain message with the TV's answer, then the next clip.
 
-## 6. Persistence
+## 6. Persistence (later milestone)
+
+Not part of the first version; decided 2026-11-15 to wait for user feedback. Until
+then the player lives inside the list or the `tvsend <file>` command, and closing it
+stops the TV. Unfinished work is parked on the branch `wip/background-player`. The
+planned behaviour:
 
 - **Background player.** A separate process started by the first play. It owns the
   queue, talks to the TV and runs the file server. The list (TUI) and the shell
@@ -183,12 +190,15 @@ home addresses and names. What was taken from it:
    list UI without the personal rules, `tvsend <dir>` / `<file>` / `<url>`.
 2. **Onboarding.** Setup wizard, connection test, firewall help, several TVs,
    `tvsend doctor`.
-3. **Persistence.** Background player, local socket, saved session, automatic continue.
+3. **Folder and TV keys in the list.** `f` choose a folder (with a "remember" switch),
+   `Backspace` up one folder, `h` back to the saved folder, `t` switch TV.
 4. **Shipping.** PyInstaller builds, release workflow, install script, `tvsend update`,
    README with terminal recording, MIT licence, CHANGELOG. First private release,
    tested on Linux and macOS, then the repo goes public.
 5. **Channels.** Homebrew tap and AUR `tvsend-bin`, updated by the release workflow.
-6. **Project hygiene.** CI (ruff, pytest on Python 3.10-3.14, Linux and macOS, with a
+6. **Persistence (after user feedback).** Background player, local socket, saved
+   session, automatic continue.
+7. **Project hygiene.** CI (ruff, pytest on Python 3.10-3.14, Linux and macOS, with a
    fake TV), CONTRIBUTING, CODE_OF_CONDUCT, SECURITY, issue and PR templates.
 
 ## 10. Before the first commit

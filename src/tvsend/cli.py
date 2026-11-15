@@ -114,26 +114,36 @@ def start_server(cfg: Config, tv_address: str) -> FileServer | None:
 
 # ---------------------------------------------------------------- commands
 def cmd_list(cfg: Config, folder: str) -> int:
-    backend = find_tv(cfg)
-    server = start_server(cfg, backend.tv.address)
-    if not server:
-        return 1
-    from .ui.app import TvApp
+    from .ui.app import SWITCH_TV, TvApp
 
-    app = TvApp(cfg, folder, backend, server)
-    app.run()
-    ctrl = app.ctrl
-    was_playing = False
-    if ctrl.is_alive():
-        was_playing = bool(ctrl.view()["item"])
-        if was_playing:  # the TV fetches the video from this program: without it the clip cannot go on
-            ctrl.send("stop")
-            deadline = time.time() + 5
-            while ctrl.view()["item"] and time.time() < deadline:
-                time.sleep(0.05)
-        ctrl.send("close")
-        ctrl.join(5)
-    server.stop()
+    while True:
+        backend = find_tv(cfg)
+        server = start_server(cfg, backend.tv.address)
+        if not server:
+            return 1
+        app = TvApp(cfg, folder, backend, server)
+        result = app.run()
+        ctrl = app.ctrl
+        was_playing = False
+        if ctrl.is_alive():
+            was_playing = bool(ctrl.view()["item"])
+            if was_playing:  # the TV fetches the video from this program: without it the clip cannot go on
+                ctrl.send("stop")
+                deadline = time.time() + 5
+                while ctrl.view()["item"] and time.time() < deadline:
+                    time.sleep(0.05)
+            ctrl.send("close")
+            ctrl.join(5)
+        server.stop()
+        if result != SWITCH_TV:
+            break
+        # another TV was chosen in the list: open the list again for it, in the same folder
+        folder = app.folder
+        try:
+            cfg = config.load()
+        except config.ConfigError as e:
+            err(str(e))
+            return 2
     if was_playing:
         print("Stopped the TV, because playback needs tvsend to stay open.")
     _update_notice(cfg)

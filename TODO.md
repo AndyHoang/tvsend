@@ -6,13 +6,6 @@ the right section.
 
 ## In progress
 
-- [ ] Background player: queue keeps playing after the list closes; `stop` and
-      `status` go through it (`daemon.py`, not wired in yet)
-- [ ] Saved session: continue automatically after an interruption, never after a
-      deliberate stop
-- [ ] List keys: `f` choose folder, `t` switch TV
-- [ ] List keys: leave the saved folder quickly (`backspace` up one folder for this
-      session, `h` back to the saved folder), with the status line naming the folder
 - [ ] macOS review of the code and fixing what the CI run on macOS reports
 
 ## To do: app
@@ -30,6 +23,19 @@ the right section.
 - [ ] Remove `tvsend`'s old neighbour from the port: the personal tool's server still
       holds port 8765 on the development machine
 
+- [ ] Scanning a very large folder (for example after going up to the home folder)
+      freezes the list once; scan in the background or cap it
+- [ ] In the TV switcher, "no, leave it playing" cannot hold: the old TV stops when
+      the list reopens for the new one. Remove the question or make it true
+
+## Later milestone: background player (waiting for user feedback)
+
+Parked on the branch `wip/background-player` (unfinished, untested).
+
+- [ ] Queue keeps playing after the list closes; `stop` and `status` go through it
+- [ ] Saved session: continue automatically after an interruption, never after a
+      deliberate stop
+
 ## To do: tests (postponed on purpose)
 
 - [ ] Tests for `cli.py`, `plain.py`, the list, the wizard, `doctor`, `firewall`,
@@ -45,8 +51,8 @@ the right section.
 - [ ] Create the Homebrew tap repository and its token secret
 - [ ] Create the AUR package `tvsend-bin` and its SSH key secret
 - [ ] Record the terminal demo and put it at the top of the README
-- [ ] Remove the "first test version" note from the README once the background player
-      and the `t` / `f` keys are in
+- [ ] Rewrite the README parts that describe the background player as available, and
+      remove the "first test version" note
 - [ ] Fill in the contact address in `CODE_OF_CONDUCT.md`
 - [ ] Set the `0.1.0` date in `CHANGELOG.md`
 - [ ] Switch the repository to public; then turn on private vulnerability reporting
@@ -70,4 +76,5 @@ the right section.
 - [x] README, licence, changelog, community files, CI workflow
 - [x] 92 tests against a fake TV
 - [x] Private repository `AndyHoang/tvsend` with the first test version
+- [x] List keys: `f` choose folder, `Backspace` up, `h` saved folder, `t` switch TV
 - [x] Fix: player failed on Python 3.13 (`_thread._ThreadHandle object is not callable`)

@@ -15,10 +15,23 @@ from .. import config, library
 from ..backends.base import ACTIVE, PAUSED, STATE_TEXT
 from ..library import SORT_TEXT, SORTS, clock, date_text, fold, size_text, sort_entries
 from ..player import POLL, Controller, url_name
+from .dialogs import ConfirmScreen, FolderScreen, TvScreen, folder_problem
+
+SWITCH_TV = "switch_tv"  # what run() returns when another TV was chosen: reopen the list for it
 
 REFRESH_SECONDS = float(os.environ.get("TVSEND_REFRESH", 10))  # the list re-reads the folder this often
 FOLLOW_PAUSE = 10.0 * POLL  # after you move the highlight yourself, it is not moved for you this long
 MESSAGE_SECONDS = 15.0  # how long a message stays on the message line
+SLOW_SCAN = float(os.environ.get("TVSEND_SLOW_SCAN", 1.5))  # a folder that takes longer to read is "big"
+
+
+def short_path(path):
+    """A path as people write it: the home folder as ~."""
+    home = os.path.expanduser("~")
+    if path == home or path.startswith(home + os.sep):
+        return "~" + path[len(home) :]
+    return path
+
 
 HELP_KEYS = [
     ("Enter", "play from the highlighted clip on down the list (with marked clips: just those, in order)"),
@@ -31,6 +44,10 @@ HELP_KEYS = [
     ("o", "change the sort order (clicking a column header sorts by it too)"),
     ("/", "filter by name - Enter keeps the filter, Esc clears it"),
     ("R", "re-read the folder now"),
+    ("f", "choose another video folder (a switch decides whether it becomes your regular folder)"),
+    ("Backspace / -", "go up to the folder above, for now only (everything below it is listed)"),
+    ("h", "back to your regular folder"),
+    ("t", "switch to another TV"),
     ("↑ ↓  j k", "move the highlight (also PageUp / PageDown, Home / End, the mouse)"),
     ("?", "this help"),
     ("q", "quit"),
@@ -99,6 +116,10 @@ class TvApp(App):
         Binding("o", "sort", "Sort"),
         Binding("slash", "filter", "Filter", key_display="/"),
         Binding("R", "refresh", "Refresh"),
+        Binding("f", "folder", "Folder"),
+        Binding("backspace,minus", "parent", "Up a folder", key_display="⌫"),
+        Binding("h", "home", "Saved folder"),
+        Binding("t", "tv", "TV"),
         Binding("question_mark", "help", "Help", key_display="?"),
         Binding("q", "quit", "Quit"),
         Binding("j", "down", "Down", show=False),
@@ -121,6 +142,7 @@ class TvApp(App):
         self.cfg, self.folder, self.backend, self.server = cfg, folder, backend, server
         self.entries, self.shown, self.notes, self.marks = [], [], [], []
         self.filter_text, self.playing_path = "", None
+        self._slow_folder = None  # a folder too big to re-read by itself every few seconds
         self.loop = bool(cfg.loop)
         self.sort = cfg.sort if cfg.sort in SORT_TEXT else "name"
         self.ctrl = ctrl or Controller(backend, server)
@@ -153,11 +175,16 @@ class TvApp(App):
         else:
             self.ctrl.send("loop", self.loop)
         self.set_interval(0.5, self.update_status)
-        self.set_interval(REFRESH_SECONDS, self.refresh_list)
+        self.set_interval(REFRESH_SECONDS, self.auto_refresh)
         self.update_status()
 
     def on_unmount(self):
         self._closing = True
+
+    def check_action(self, action, parameters):
+        """While a pop-up is open the list's own keys do nothing (s must not stop the TV from there)."""
+        own = {b.action for b in self.BINDINGS}
+        return not (action in own and isinstance(self.screen, ModalScreen))
 
     def save_prefs(self):
         self.cfg.sort, self.cfg.loop = self.sort, self.loop
@@ -255,8 +282,18 @@ class TvApp(App):
     def _signature(entries):
         return [(e["path"], e["size"], e["mtime"], e["dur"]) for e in entries]
 
+    def auto_refresh(self):
+        if self.folder != self._slow_folder:
+            self.refresh_list()
+
     def refresh_list(self, force=False):
+        began = time.time()
         entries, self.notes = library.scan(self.folder)
+        if time.time() - began > SLOW_SCAN and self.folder != self._slow_folder:
+            self._slow_folder = self.folder
+            self.notes.insert(0, "big folder: it is not re-read by itself (R re-reads it)")
+        elif self.folder == self._slow_folder:
+            self.notes.insert(0, "big folder: it is not re-read by itself (R re-reads it)")
         changed = self._signature(entries) != self._signature(self.entries)
         self.entries = entries
         paths = {e["path"] for e in entries}
@@ -307,6 +344,8 @@ class TvApp(App):
             ]
         else:
             info = ["mode: " + mode, "no videos found in %s" % self.folder]
+        if self.folder != self.cfg.folder:
+            info.insert(1, "folder: %s (not saved - f saves it, h goes back)" % short_path(self.folder))
         if self.filter_text:
             info.append('filter "%s": %d shown' % (self.filter_text, len(self.shown)))
         if self.marks:
@@ -423,6 +462,89 @@ class TvApp(App):
     def action_help(self):
         self.push_screen(HelpScreen())
 
+    # ---- f: another folder
+    def action_folder(self):
+        self.push_screen(FolderScreen(self.folder), self.folder_chosen)
+
+    def folder_chosen(self, choice):
+        if not choice:
+            return
+        path, remember = choice
+        if not remember:
+            return self.show_folder(path, "Folder: %s (for now only)" % short_path(path))
+        was_saved = self.cfg.folder
+        self.cfg.folder = path
+        try:
+            config.save(self.cfg)
+        except OSError:
+            self.cfg.folder = was_saved
+            text = "Folder: %s (could not be saved as your regular folder)" % short_path(path)
+            return self.show_folder(path, text, "warning")
+        text = "Folder: %s" % short_path(path)
+        if path != was_saved:
+            text += " - saved as your regular folder; plain `tvsend` opens it from now on"
+        self.show_folder(path, text)
+
+    def show_folder(self, path, text, level="info"):
+        """List another folder. What is playing goes on, but no longer follows this list."""
+        self.folder = path
+        self.marks = []
+        self.live = False
+        if self.ctrl.cur and hasattr(self.ctrl, "set_note"):
+            self.ctrl.set_note({"live": False, "folder": path})
+        self.action_clear_filter()  # also re-draws the list when a filter was set
+        self.refresh_list(force=True)
+        self.flash(text, level)
+        self.update_status()
+
+    def action_parent(self):
+        """Backspace: the folder above, for this session only."""
+        parent = os.path.dirname(self.folder.rstrip(os.sep)) or os.sep
+        if parent == self.folder:
+            return self.flash("This is the top folder - there is nothing above it.")
+        problem = folder_problem(parent)
+        if problem:
+            return self.flash(problem, "warning")
+        self.show_folder(parent, "Folder: %s (for now only - h goes back, f saves it)" % short_path(parent))
+
+    def action_home(self):
+        """h: back to the saved folder."""
+        if self.folder == self.cfg.folder:
+            return self.flash("This is your regular folder already.")
+        problem = folder_problem(self.cfg.folder)
+        if problem:
+            return self.flash(problem, "warning")
+        self.show_folder(self.cfg.folder, "Folder: %s (your regular folder)" % short_path(self.cfg.folder))
+
+    # ---- t: another TV
+    def current_tv_id(self):
+        return getattr(getattr(self.backend, "tv", None), "id", None) or self.cfg.default_tv
+
+    def action_tv(self):
+        self.push_screen(TvScreen(self.cfg, self.current_tv_id()), self.tv_chosen)
+
+    def tv_chosen(self, tv):
+        if not tv or tv.id == self.current_tv_id():
+            return
+        it = self.ctrl.view()["item"]
+        if it:  # yes stops it, no leaves it playing, Esc calls the switch off
+            question = "Stop %s on %s?" % (it["name"], self.backend.name)
+            self.push_screen(ConfirmScreen(question), lambda stop: self.switch_tv(tv, stop))
+        else:
+            self.switch_tv(tv, False)
+
+    def switch_tv(self, tv, stop):
+        if stop is None:
+            return
+        self.cfg.add_tv(tv, make_default=True)
+        try:
+            config.save(self.cfg)
+        except OSError as e:
+            return self.flash("Could not save the TV choice: %s" % e, "error")
+        if stop:
+            self.ctrl.send("stop")
+        self.exit(SWITCH_TV)
+
     def action_down(self):
         self.table.action_cursor_down()
 
@@ -441,11 +563,15 @@ class TvApp(App):
         self.table.focus()
 
     def on_input_changed(self, event):
+        if event.input.id != "filter":
+            return
         self.filter_text = event.value.strip()
         self.rebuild()
         self.update_status()
 
     def on_input_submitted(self, event):
+        if event.input.id != "filter":
+            return
         if not self.filter_text:
             self.query_one("#filter", Input).remove_class("on")
         self.table.focus()

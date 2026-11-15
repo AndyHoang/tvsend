@@ -14,8 +14,12 @@ _Terminal recording: to be added._
 > uv run tvsend
 > ```
 >
-> Not built yet, although described below: the background player (closing tvsend stops
-> the TV for now), continuing an interrupted session, and the `t` / `f` keys in the list.
+> Not in this version, although described below: the background player. Closing tvsend
+> stops the TV, and an interrupted session is not continued. It is planned for a later
+> milestone, after first user feedback.
+>
+> Extra keys in the list: `f` choose a folder, `Backspace` up one folder, `h` back to
+> the saved folder, `t` switch TV.
 
 ## Install
 
