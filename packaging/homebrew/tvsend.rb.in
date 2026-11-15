@@ -1,0 +1,39 @@
+# Homebrew formula for tvsend. Generated from packaging/homebrew/tvsend.rb.in by the
+# release workflow - edit the template, not the copy in the tap.
+class Tvsend < Formula
+  desc "Send video files from your terminal to a TV on your home network"
+  homepage "https://github.com/AndyHoang/tvsend"
+  version "@VERSION@"
+  license "MIT"
+
+  on_macos do
+    on_arm do
+      url "https://github.com/AndyHoang/tvsend/releases/download/v@VERSION@/tvsend-macos-arm64"
+      sha256 "@SHA_MACOS_ARM64@"
+    end
+    on_intel do
+      url "https://github.com/AndyHoang/tvsend/releases/download/v@VERSION@/tvsend-macos-x86_64"
+      sha256 "@SHA_MACOS_X86_64@"
+    end
+  end
+
+  on_linux do
+    on_arm do
+      url "https://github.com/AndyHoang/tvsend/releases/download/v@VERSION@/tvsend-linux-arm64"
+      sha256 "@SHA_LINUX_ARM64@"
+    end
+    on_intel do
+      url "https://github.com/AndyHoang/tvsend/releases/download/v@VERSION@/tvsend-linux-x86_64"
+      sha256 "@SHA_LINUX_X86_64@"
+    end
+  end
+
+  def install
+    binary = Dir["tvsend-*"].first
+    bin.install binary => "tvsend"
+  end
+
+  test do
+    assert_match version.to_s, shell_output("#{bin}/tvsend --version")
+  end
+end

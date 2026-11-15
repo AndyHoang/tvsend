@@ -1,0 +1,80 @@
+name: Bug report
+description: Something does not work as described
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for the report. Please remove anything private (names of people, home
+        addresses) from what you paste; local network addresses such as 192.168.x.x are fine.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What you did, what you expected, and what happened instead. Include any message tvsend showed.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: tvsend version
+      description: Output of `tvsend --version`
+      placeholder: "0.1.0"
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options:
+        - Linux
+        - macOS (Apple Silicon)
+        - macOS (Intel)
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: os_detail
+    attributes:
+      label: Distribution / OS version
+      placeholder: "Ubuntu 24.04, Arch, macOS 15.2, ..."
+  - type: dropdown
+    id: install
+    attributes:
+      label: How did you install tvsend?
+      options:
+        - Install script
+        - Homebrew
+        - AUR
+        - Manual download
+        - From source (uv)
+    validations:
+      required: true
+  - type: input
+    id: tv
+    attributes:
+      label: TV brand and model
+      placeholder: "Brand, model name or number, year if known"
+    validations:
+      required: true
+  - type: dropdown
+    id: tv_network
+    attributes:
+      label: How is the TV connected?
+      options:
+        - Wi-Fi
+        - Network cable
+        - Not sure
+  - type: textarea
+    id: doctor
+    attributes:
+      label: Output of `tvsend doctor`
+      description: Run `tvsend doctor` and paste everything it prints.
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: file
+    attributes:
+      label: The file, if the problem is about one file
+      description: File type (mp4, mkv, ...), size, and where it came from (phone, camera, download).

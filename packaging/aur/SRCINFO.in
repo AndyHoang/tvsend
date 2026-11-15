@@ -1,0 +1,19 @@
+pkgbase = tvsend-bin
+	pkgdesc = Send video files from your terminal to a TV on your home network
+	pkgver = @VERSION@
+	pkgrel = 1
+	url = https://github.com/AndyHoang/tvsend
+	arch = x86_64
+	arch = aarch64
+	license = MIT
+	provides = tvsend
+	conflicts = tvsend
+	options = !strip
+	source = LICENSE-@VERSION@::https://raw.githubusercontent.com/AndyHoang/tvsend/v@VERSION@/LICENSE
+	sha256sums = @SHA_LICENSE@
+	source_x86_64 = tvsend-@VERSION@-x86_64::https://github.com/AndyHoang/tvsend/releases/download/v@VERSION@/tvsend-linux-x86_64
+	sha256sums_x86_64 = @SHA_LINUX_X86_64@
+	source_aarch64 = tvsend-@VERSION@-aarch64::https://github.com/AndyHoang/tvsend/releases/download/v@VERSION@/tvsend-linux-arm64
+	sha256sums_aarch64 = @SHA_LINUX_ARM64@
+
+pkgname = tvsend-bin

@@ -1,0 +1,23 @@
+# Maintainer: Andy Hoang
+# Generated from packaging/aur/PKGBUILD.in by the release workflow - edit the template.
+pkgname=tvsend-bin
+pkgver=@VERSION@
+pkgrel=1
+pkgdesc="Send video files from your terminal to a TV on your home network"
+arch=('x86_64' 'aarch64')
+url="https://github.com/AndyHoang/tvsend"
+license=('MIT')
+provides=('tvsend')
+conflicts=('tvsend')
+options=('!strip')  # a PyInstaller binary carries its payload after the program; stripping breaks it
+source=("LICENSE-$pkgver::https://raw.githubusercontent.com/AndyHoang/tvsend/v$pkgver/LICENSE")
+source_x86_64=("tvsend-$pkgver-x86_64::https://github.com/AndyHoang/tvsend/releases/download/v$pkgver/tvsend-linux-x86_64")
+source_aarch64=("tvsend-$pkgver-aarch64::https://github.com/AndyHoang/tvsend/releases/download/v$pkgver/tvsend-linux-arm64")
+sha256sums=('@SHA_LICENSE@')
+sha256sums_x86_64=('@SHA_LINUX_X86_64@')
+sha256sums_aarch64=('@SHA_LINUX_ARM64@')
+
+package() {
+    install -Dm755 "tvsend-$pkgver-$CARCH" "$pkgdir/usr/bin/tvsend"
+    install -Dm644 "LICENSE-$pkgver" "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}

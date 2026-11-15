@@ -1,0 +1,39 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "tvsend"
+dynamic = ["version"]
+description = "Send video files from your terminal to a TV on your home network."
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.10"
+authors = [{ name = "Andy Hoang" }]
+dependencies = [
+    "textual>=8,<9",
+    "tomli>=2; python_version < '3.11'",
+]
+
+[project.scripts]
+tvsend = "tvsend.cli:run"
+
+[dependency-groups]
+dev = ["pytest>=8", "ruff>=0.6"]
+
+[tool.hatch.version]
+path = "src/tvsend/__init__.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/tvsend"]
+
+[tool.ruff]
+line-length = 110
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+ignore = ["UP031"]  # percent formatting is the house style
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

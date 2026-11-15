@@ -1,0 +1,214 @@
+name: Release
+
+# Push a tag like v1.2.3 and this builds the four binaries, publishes a GitHub Release
+# with checksums and the CHANGELOG section as notes, then updates the Homebrew tap and
+# the AUR package (each only when its secret is set).
+#
+# Optional settings (repository -> Settings -> Secrets and variables -> Actions):
+#   secret   HOMEBREW_TAP_TOKEN   token with write access to the tap repository
+#   variable HOMEBREW_TAP_REPO    tap repository (default: <owner>/homebrew-tap)
+#   secret   AUR_SSH_PRIVATE_KEY  SSH key registered with the AUR account that owns tvsend-bin
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build ${{ matrix.asset }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          # Linux is built on the oldest hosted image (Ubuntu 22.04, glibc 2.35) so the
+          # binary also starts on older systems than the newest one.
+          - { runner: ubuntu-22.04, asset: tvsend-linux-x86_64 }
+          - { runner: ubuntu-22.04-arm, asset: tvsend-linux-arm64 }
+          - { runner: macos-15, asset: tvsend-macos-arm64 }
+          - { runner: macos-15-intel, asset: tvsend-macos-x86_64 }
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - uses: astral-sh/setup-uv@v10
+
+      - name: Tag must match the version in the source
+        shell: bash
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          src="$(sed -n 's/^__version__ = "\(.*\)"$/\1/p' src/tvsend/__init__.py)"
+          if [ "$tag" != "$src" ]; then
+            echo "::error::tag v$tag does not match __version__ = \"$src\" in src/tvsend/__init__.py"
+            exit 1
+          fi
+
+      - name: Build
+        run: sh packaging/build.sh
+
+      - name: Check that the binary starts
+        shell: bash
+        run: |
+          test -f "dist/${{ matrix.asset }}"
+          out="$("dist/${{ matrix.asset }}" --version)"
+          echo "$out"
+          case "$out" in *"${GITHUB_REF_NAME#v}"*) ;; *) echo "::error::unexpected version output"; exit 1 ;; esac
+          "dist/${{ matrix.asset }}" --help >/dev/null
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: ${{ matrix.asset }}
+          path: dist/${{ matrix.asset }}
+          if-no-files-found: error
+          retention-days: 5
+
+  release:
+    name: Publish GitHub Release
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - uses: actions/download-artifact@v8
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Checksums and notes
+        run: |
+          cd dist
+          ls -l
+          sha256sum tvsend-linux-x86_64 tvsend-linux-arm64 tvsend-macos-arm64 tvsend-macos-x86_64 > SHA256SUMS
+          cat SHA256SUMS
+          cd ..
+          sh packaging/release-notes.sh "$GITHUB_REF_NAME" CHANGELOG.md > notes.md
+          cat notes.md
+
+      - name: Create the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "tvsend ${GITHUB_REF_NAME#v}" \
+            --notes-file notes.md \
+            --verify-tag \
+            dist/tvsend-linux-x86_64 dist/tvsend-linux-arm64 \
+            dist/tvsend-macos-arm64 dist/tvsend-macos-x86_64 \
+            dist/SHA256SUMS
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: SHA256SUMS
+          path: dist/SHA256SUMS
+          if-no-files-found: error
+          retention-days: 5
+
+  homebrew:
+    name: Update the Homebrew tap
+    needs: release
+    runs-on: ubuntu-24.04
+    env:
+      TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+      TAP_REPO: ${{ vars.HOMEBREW_TAP_REPO || format('{0}/homebrew-tap', github.repository_owner) }}
+    steps:
+      - name: Is the tap token set?
+        id: guard
+        run: |
+          if [ -n "$TAP_TOKEN" ]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "HOMEBREW_TAP_TOKEN is not set - skipping the Homebrew tap."
+          fi
+
+      - uses: actions/checkout@v7
+        if: steps.guard.outputs.run == 'true'
+        with:
+          persist-credentials: false
+
+      - uses: actions/download-artifact@v8
+        if: steps.guard.outputs.run == 'true'
+        with:
+          name: SHA256SUMS
+          path: dist
+
+      - name: Write the formula and push it
+        if: steps.guard.outputs.run == 'true'
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          git clone --depth 1 "https://x-access-token:${TAP_TOKEN}@github.com/${TAP_REPO}.git" tap
+          mkdir -p tap/Formula
+          sh packaging/render.sh "$version" dist/SHA256SUMS packaging/homebrew/tvsend.rb.in > tap/Formula/tvsend.rb
+          cd tap
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Formula/tvsend.rb
+          if git diff --cached --quiet; then
+            echo "The formula is already up to date."
+          else
+            git commit -m "tvsend $version"
+            git push origin HEAD
+          fi
+
+  aur:
+    name: Update the AUR package
+    needs: release
+    runs-on: ubuntu-24.04
+    env:
+      AUR_KEY: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
+    steps:
+      - name: Is the AUR key set?
+        id: guard
+        run: |
+          if [ -n "$AUR_KEY" ]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "AUR_SSH_PRIVATE_KEY is not set - skipping the AUR package."
+          fi
+
+      - uses: actions/checkout@v7
+        if: steps.guard.outputs.run == 'true'
+        with:
+          persist-credentials: false
+
+      - uses: actions/download-artifact@v8
+        if: steps.guard.outputs.run == 'true'
+        with:
+          name: SHA256SUMS
+          path: dist
+
+      - name: Write PKGBUILD and .SRCINFO and push them
+        if: steps.guard.outputs.run == 'true'
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          mkdir -p ~/.ssh
+          printf '%s\n' "$AUR_KEY" > ~/.ssh/aur
+          chmod 600 ~/.ssh/aur
+          ssh-keyscan -t ed25519 aur.archlinux.org >> ~/.ssh/known_hosts 2>/dev/null
+          export GIT_SSH_COMMAND="ssh -i ~/.ssh/aur -o IdentitiesOnly=yes"
+          git clone ssh://aur@aur.archlinux.org/tvsend-bin.git aur
+          sh packaging/render.sh "$version" dist/SHA256SUMS packaging/aur/PKGBUILD.in LICENSE > aur/PKGBUILD
+          sh packaging/render.sh "$version" dist/SHA256SUMS packaging/aur/SRCINFO.in LICENSE > aur/.SRCINFO
+          cd aur
+          git config user.name "Andy Hoang"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add PKGBUILD .SRCINFO
+          if git diff --cached --quiet; then
+            echo "The AUR package is already up to date."
+          else
+            git commit -m "tvsend $version"
+            git push origin HEAD:master
+          fi
+          rm -f ~/.ssh/aur

@@ -1,0 +1,48 @@
+name: TV report
+description: Tell us that your TV works, or does not work, with tvsend
+labels: [tv-report]
+body:
+  - type: markdown
+    attributes:
+      value: These reports build the list of TVs known to work. One report per TV model, please.
+  - type: input
+    id: tv
+    attributes:
+      label: TV brand and model
+      placeholder: "Brand, model name or number, year if known"
+    validations:
+      required: true
+  - type: dropdown
+    id: result
+    attributes:
+      label: Does it work?
+      options:
+        - Works
+        - Works partly
+        - Does not work
+    validations:
+      required: true
+  - type: checkboxes
+    id: details
+    attributes:
+      label: What works?
+      options:
+        - label: tvsend finds the TV by itself
+        - label: The connection test passes
+        - label: mp4 files play
+        - label: The next clip starts by itself
+        - label: Pause, restart and stop work
+  - type: input
+    id: version
+    attributes:
+      label: tvsend version
+      description: Output of `tvsend --version`
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes
+      description: >-
+        File types that play or are refused, TV settings you had to change, and the output
+        of `tvsend doctor` if something does not work.
