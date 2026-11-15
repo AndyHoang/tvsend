@@ -58,17 +58,21 @@ Versions follow [semantic versioning](https://semver.org): `MAJOR.MINOR.PATCH`, 
 place, `src/tvsend/__init__.py`, and every release is a git tag `v<version>`.
 
 - **Every push and pull request** runs the CI workflow: lint, and the tests on Python
-  3.10 to 3.14 on Linux and macOS.
-- **Trying the build without releasing:** on GitHub, Actions -> Release -> Run workflow
-  builds the four binaries and keeps them as artifacts for 5 days. Locally,
-  `sh packaging/build.sh` builds the one for your machine into `dist/`.
-- **Releasing** (maintainer):
+  3.10 to 3.14 on Linux and macOS. No binaries are built there.
+- **A release** (maintainer) is made by starting the Release workflow by hand; that is
+  the only place binaries are built.
   1. Make sure `CHANGELOG.md` describes the changes under "Unreleased".
-  2. `uv run python packaging/release.py 0.2.0` sets the version, dates the changelog
-     section, runs lint and tests, commits and tags. `--dry-run` shows what it would do.
-  3. `git push origin main v0.2.0`. The pushed tag starts the Release workflow, which
-     builds the binaries and publishes the GitHub Release with checksums and the
-     changelog section as notes.
+  2. On GitHub: Actions -> Release -> Run workflow, and choose `patch`, `minor` or
+     `major` (or `current` to release the version already in the source, or type an
+     exact version such as `0.2.0rc1` for a pre-release). From a terminal:
+     `gh workflow run release.yml -f bump=patch`.
+  3. The workflow sets the version, dates the changelog section, runs lint and tests,
+     commits and tags `v<version>` on `main`, builds the four binaries from that tag
+     and publishes the GitHub Release with checksums and the changelog section as
+     notes. Run `git pull` afterwards to get the release commit.
+- To see what a release would do without doing it:
+  `uv run python packaging/release.py patch --dry-run`. To build the binary for your
+  own machine: `sh packaging/build.sh` (output in `dist/`).
 
 ## Adding support for another kind of TV
 

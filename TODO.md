@@ -48,7 +48,8 @@ Parked on the branch `wip/background-player` (unfinished, untested).
 
 - [ ] Build and try the macOS binaries (Apple Silicon and Intel) and Linux arm64;
       only Linux x86_64 has been built
-- [ ] First release: `uv run python packaging/release.py 0.1.0`, then push the tag
+- [ ] First release: Actions -> Release -> Run workflow with `current` (0.1.0). The
+      workflow has never run to the end; watch the first run
 - [ ] Later: register a Homebrew tap and the AUR package `tvsend-bin`, then put their
       jobs back into the release workflow and their lines back into the README
       (templates are in `packaging/homebrew` and `packaging/aur`)

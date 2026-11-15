@@ -1,28 +1,82 @@
 name: Release
 
-# Two ways to run:
+# The one signal that makes a release: start this workflow by hand
+# (Actions -> Release -> Run workflow, or `gh workflow run release.yml -f bump=patch`).
+# Binaries are built only here, never on ordinary pushes.
 #
-# - Push a tag like v1.2.3 (made by `uv run python packaging/release.py 1.2.3`): builds
-#   the four binaries and publishes a GitHub Release with checksums and the CHANGELOG
-#   section as notes. A version with a, b or rc in it (v1.2.3rc1) becomes a pre-release.
-# - Start it by hand (Actions -> Release -> Run workflow): builds the four binaries and
-#   keeps them as workflow artifacts for 5 days. Nothing is published.
+#   1. prepare  works out the new version, sets it in the source, dates the CHANGELOG
+#               section, runs lint and tests, commits, tags v<version> and pushes both
+#   2. build    builds the four binaries from that tag
+#   3. release  publishes the GitHub Release with checksums and the CHANGELOG section
+#               as notes (a version with a, b or rc in it becomes a pre-release)
+#
+# If a build fails after step 1, fix nothing in the tag: use "Re-run failed jobs" on the
+# same run, or release the next patch version.
 
 on:
-  push:
-    tags: ["v*"]
   workflow_dispatch:
+    inputs:
+      bump:
+        description: "Which version to release"
+        type: choice
+        default: patch
+        options:
+          - patch
+          - minor
+          - major
+          - current
+      version:
+        description: "Or an exact version (for example 0.2.0rc1) - overrides the choice above"
+        type: string
+        required: false
 
 permissions:
   contents: read
 
 concurrency:
-  group: release-${{ github.ref }}
+  group: release
   cancel-in-progress: false
 
 jobs:
+  prepare:
+    name: Version, changelog, tag
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    outputs:
+      version: ${{ steps.prepare.outputs.version }}
+      tag: ${{ steps.prepare.outputs.tag }}
+    steps:
+      - name: Releases are made from main
+        if: github.ref != 'refs/heads/main'
+        run: |
+          echo "::error::start this workflow on the main branch"
+          exit 1
+
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0 # all tags, to check the new version is newer than the last release
+
+      - uses: astral-sh/setup-uv@v10.3.3
+
+      - name: Set the version, date the changelog, check, commit and tag
+        id: prepare
+        env:
+          BUMP: ${{ inputs.bump }}
+          EXACT: ${{ inputs.version }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          uv run python packaging/release.py "${EXACT:-$BUMP}"
+
+      - name: Push the commit and the tag
+        env:
+          TAG: ${{ steps.prepare.outputs.tag }}
+        run: git push --atomic origin main "$TAG"
+
   build:
     name: Build ${{ matrix.asset }}
+    needs: prepare
     runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false
@@ -37,32 +91,18 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
+          ref: ${{ needs.prepare.outputs.tag }}
           persist-credentials: false
 
-      - uses: astral-sh/setup-uv@v10
-
-      - name: Version (a tag must match the version in the source)
-        id: version
-        shell: bash
-        run: |
-          src="$(sed -n 's/^__version__ = "\(.*\)"$/\1/p' src/tvsend/__init__.py)"
-          if [ -z "$src" ]; then
-            echo "::error::no __version__ found in src/tvsend/__init__.py"
-            exit 1
-          fi
-          if [ "$GITHUB_REF_TYPE" = "tag" ] && [ "${GITHUB_REF_NAME#v}" != "$src" ]; then
-            echo "::error::tag $GITHUB_REF_NAME does not match __version__ = \"$src\" in src/tvsend/__init__.py"
-            exit 1
-          fi
-          echo "version=$src" >> "$GITHUB_OUTPUT"
+      - uses: astral-sh/setup-uv@v10.3.3
 
       - name: Build
         run: sh packaging/build.sh
 
-      - name: Check that the binary starts
+      - name: Check that the binary starts and reports the released version
         shell: bash
         env:
-          VERSION: ${{ steps.version.outputs.version }}
+          VERSION: ${{ needs.prepare.outputs.version }}
         run: |
           test -f "dist/${{ matrix.asset }}"
           out="$("dist/${{ matrix.asset }}" --version)"
@@ -79,14 +119,14 @@ jobs:
 
   release:
     name: Publish GitHub Release
-    if: github.ref_type == 'tag'
-    needs: build
+    needs: [prepare, build]
     runs-on: ubuntu-24.04
     permissions:
       contents: write
     steps:
       - uses: actions/checkout@v7
         with:
+          ref: ${{ needs.prepare.outputs.tag }}
           persist-credentials: false
 
       - uses: actions/download-artifact@v8
@@ -95,24 +135,27 @@ jobs:
           merge-multiple: true
 
       - name: Checksums and notes
+        env:
+          TAG: ${{ needs.prepare.outputs.tag }}
         run: |
           cd dist
           ls -l
           sha256sum tvsend-linux-x86_64 tvsend-linux-arm64 tvsend-macos-arm64 tvsend-macos-x86_64 > SHA256SUMS
           cat SHA256SUMS
           cd ..
-          sh packaging/release-notes.sh "$GITHUB_REF_NAME" CHANGELOG.md > notes.md
+          sh packaging/release-notes.sh "$TAG" CHANGELOG.md > notes.md
           cat notes.md
 
       - name: Create the release
         env:
           GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.prepare.outputs.tag }}
         run: |
           pre=""
-          case "${GITHUB_REF_NAME#v}" in *a[0-9]*|*b[0-9]*|*rc[0-9]*) pre="--prerelease" ;; esac
-          gh release create "$GITHUB_REF_NAME" \
+          case "${TAG#v}" in *a[0-9]*|*b[0-9]*|*rc[0-9]*) pre="--prerelease" ;; esac
+          gh release create "$TAG" \
             --repo "$GITHUB_REPOSITORY" \
-            --title "tvsend ${GITHUB_REF_NAME#v}" \
+            --title "tvsend ${TAG#v}" \
             --notes-file notes.md \
             --verify-tag $pre \
             dist/tvsend-linux-x86_64 dist/tvsend-linux-arm64 \
