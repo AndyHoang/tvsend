@@ -7,7 +7,8 @@
   tvsend stop               stop playback on the TV
   tvsend status             what the TV is doing
   tvsend tv                 list the TVs, find new ones, choose the default
-  tvsend setup              run the setup again
+  tvsend setup              run the setup again (keeps your other settings)
+  tvsend reset              forget all settings and start fresh (add --yes to skip the question)
   tvsend doctor             check the connection to the TV and print a report
   tvsend update             replace tvsend with the newest release
   tvsend --version | --help
@@ -16,6 +17,7 @@ A file or folder named like a command is given with a path: tvsend ./stop
 """
 
 import os
+import shutil
 import sys
 import threading
 import time
@@ -270,6 +272,42 @@ def cmd_setup(cfg: Config) -> int:
     return 0 if run_wizard(cfg) else 1
 
 
+def cmd_reset(yes: bool = False) -> int:
+    """Forget everything tvsend saved: settings, remembered clip lengths, logs. Videos are not touched."""
+    folders = [d for d in (paths.config_dir(), paths.state_dir(), paths.cache_dir()) if os.path.isdir(d)]
+    if not folders:
+        print("Nothing to reset: tvsend has no saved settings.")
+        return 0
+    print("This removes tvsend's own folders (your videos are not touched):")
+    for d in folders:
+        print("  " + d)
+    if not yes:
+        if not interactive():
+            err("Not asked in a terminal: run `tvsend reset --yes` to confirm.")
+            return 1
+        try:
+            answer = input("Remove them and start fresh? [y/N] ").strip().lower()
+        except (EOFError, KeyboardInterrupt):
+            print()
+            return 1
+        if answer not in ("y", "yes"):
+            print("Nothing was removed.")
+            return 1
+    failed = False
+    for d in folders:
+        if os.path.basename(d) != paths.APP:  # only ever a folder named tvsend
+            continue
+        try:
+            shutil.rmtree(d)
+        except OSError as e:
+            err("Could not remove %s: %s" % (d, e))
+            failed = True
+    if failed:
+        return 1
+    print("Done. Run `tvsend` to set it up again.")
+    return 0
+
+
 def _update_notice(cfg: Config) -> None:
     try:
         from .update import update_notice
@@ -312,10 +350,13 @@ def main(argv: list[str]) -> int:
     if argv and argv[0].startswith("-"):
         err("Unknown option %s. Try `tvsend --help`." % argv[0])
         return 2
+    if argv and argv[0] == "reset" and argv[1:] in ([], ["--yes"], ["-y"]):
+        return cmd_reset(yes=len(argv) == 2)  # before the config is read: it also cures a broken one
     try:
         cfg = config.load()
     except config.ConfigError as e:
         err(str(e))
+        err("Fix that file, or run `tvsend reset` to start fresh.")
         return 2
     if len(argv) == 1:
         cmd = argv[0]

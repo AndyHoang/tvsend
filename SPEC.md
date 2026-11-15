@@ -58,6 +58,7 @@ tvsend <url>              play a direct video link now
 tvsend stop               stop playback and end the background player
 tvsend status             what the TV is doing, what is next
 tvsend setup              run the setup wizard again
+tvsend reset              forget all settings and start fresh (asks first; --yes skips the question)
 tvsend tv                 list saved TVs, add one, choose the default
 tvsend doctor             check TV reachability, file server, firewall; print a report
 tvsend update             replace the binary with the newest release
