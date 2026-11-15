@@ -102,7 +102,7 @@ class Controller(threading.Thread):
                 if cmd[0] == "close":
                     return
                 try:
-                    self._handle(cmd)
+                    self._command(cmd)
                 except Exception as e:  # never let the watcher die
                     self.say("Problem: %s" % e, "error")
                 if cmd[0] == "play":
@@ -117,7 +117,7 @@ class Controller(threading.Thread):
                 self.say("Problem: %s" % e, "error")
 
     # -- commands
-    def _handle(self, cmd):
+    def _command(self, cmd):  # not "_handle": threading.Thread uses that name itself (Python 3.13)
         name = cmd[0]
         if name == "play":
             self._play(cmd[1], cmd[2] if len(cmd) > 2 else 0, cmd[3] if len(cmd) > 3 else 0.0)
