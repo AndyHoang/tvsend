@@ -2,9 +2,6 @@ import os
 import sys
 import time
 
-# Must be set before tvsend.player is imported: its waiting times are read at import.
-os.environ["TVSEND_POLL"] = "0.05"
-os.environ["TVSEND_END_SLACK"] = "4.0"
 os.environ["NO_PROXY"] = os.environ["no_proxy"] = "127.0.0.1,localhost"
 
 sys.path.insert(0, os.path.dirname(__file__))
