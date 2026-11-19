@@ -3,7 +3,7 @@
 [![CI](https://github.com/AndyHoang/tvsend/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/AndyHoang/tvsend/actions/workflows/ci.yml)
 [![Package check](https://github.com/AndyHoang/tvsend/actions/workflows/package.yml/badge.svg)](https://github.com/AndyHoang/tvsend/actions/workflows/package.yml)
 [![Latest release](https://img.shields.io/github/v/release/AndyHoang/tvsend?include_prereleases&sort=semver)](https://github.com/AndyHoang/tvsend/releases/latest)
-[![Python 3.10+](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13%20%7C%203.14-blue)](pyproject.toml)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue)](pyproject.toml)
 [![Platforms](https://img.shields.io/badge/platforms-Linux%20%7C%20macOS-lightgrey)](#install)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
@@ -176,8 +176,8 @@ again or `m` to type the TV's address (for example `192.0.2.20`). Some TVs need
 A firewall on your computer is probably blocking the TV. `tvsend setup` and
 `tvsend doctor` show the exact command for your firewall, limited to the TV's address
 and the one port tvsend uses (8765 by default). The macOS firewall works per program
-rather than per address, so there the command allows tvsend itself. Example for ufw, with a computer at
-`192.0.2.10` and a TV at `192.0.2.20`:
+rather than per address, so there the command allows tvsend itself. Example for ufw,
+with a computer at `192.0.2.10` and a TV at `192.0.2.20`:
 
 ```sh
 sudo ufw allow from 192.0.2.20 to 192.0.2.10 port 8765 proto tcp

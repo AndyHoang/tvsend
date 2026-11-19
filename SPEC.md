@@ -45,7 +45,7 @@ the TV in under two minutes without reading documentation.
 | Subtitles | Next milestone: a `.srt`/`.vtt` file next to the video, served with it. Subtitles inside the video file are out of scope (no ffmpeg) |
 | Onboarding | Full-screen 4-step wizard on first run; `tvsend setup` repeats it |
 | Firewall | Tested during setup. If blocked: show the exact command and, in first-time setup, offer to run it |
-| Install channels | GitHub Releases, install script, `tvsend update`. Homebrew tap and AUR `tvsend-bin` in the next milestone, once they are registered (templates are kept in `packaging/`) |
+| Install channels | GitHub Releases, install script, `tvsend update`. Homebrew tap in the next milestone; AUR `tvsend-bin` only once users ask for it (templates are kept in `packaging/`) |
 | Repo standards | README with demo and release automation first; CI, tests and community files in a later phase |
 
 ## 3. Commands
@@ -197,8 +197,8 @@ home addresses and names. What was taken from it:
    README with terminal recording, MIT licence, CHANGELOG. First private release,
    tested on Linux and macOS, then the repo goes public.
 5. **Next milestone: Chromecast, subtitles, distribution.** A Chromecast back-end, subtitle
-   files next to the video, and the Homebrew tap and AUR `tvsend-bin` once registered (the
-   release workflow gets the two jobs back then). Task list in `MILESTONES.md`.
+   files next to the video, and the Homebrew tap (its job returns to the release workflow).
+   AUR `tvsend-bin` waits until users ask for it. Task list in `MILESTONES.md`.
 6. **Persistence (after user feedback).** Background player, local socket, saved
    session, automatic continue.
 7. **Project hygiene.** CI (ruff, pytest on Python 3.10-3.14, Linux and macOS, with a

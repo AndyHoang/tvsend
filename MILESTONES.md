@@ -45,19 +45,15 @@ the release it shipped in under its heading.
       Linux arm64 (all four build and start on GitHub's machines; only Linux x86_64
       was also started locally)
 - [ ] Record the terminal demo and put it at the top of the README
-- [x] Rewrite the README parts that describe the background player as available, and
-      remove the "first test version" note
-- [x] Fill in the contact address in `CODE_OF_CONDUCT.md`
-- [ ] Switch the repository to public; then turn on private vulnerability reporting
-      (needed by `SECURITY.md`) and check that `install.sh` and `tvsend update` work
-      without a login
+- [ ] Release 0.1.1 with the macOS update fix (`tvsend update` in 0.1.0 cannot reach
+      GitHub on macOS, so 0.1.0 users there must reinstall with `install.sh`)
 - [ ] Run the Package check workflow once on GitHub and fix what it finds (the Homebrew
       job has not run anywhere yet), then download its binaries and try them on real
       machines
 
 ## Milestone 2: Chromecast, subtitles, distribution
 
-Planned after the repository is public. Each part ships on its own; tick in any order.
+Each part ships on its own; tick in any order.
 
 ### Chromecast
 
@@ -85,11 +81,9 @@ Planned after the repository is public. Each part ships on its own; tick in any 
 
 - [ ] Homebrew: create the tap repository, publish the formula from
       `packaging/homebrew` on each release (job in the release workflow), add the
-      install line to the README. The Package check workflow already installs it
-      from a local tap
-- [ ] AUR `tvsend-bin`: only once people use tvsend and ask for it - it has to be
-      submitted to and maintained on the AUR. The template in `packaging/aur` is ready
-      (it built, passed namcap and installed on Arch Linux in a local check)
+      install line to the README
+- [ ] AUR `tvsend-bin`: only once people use tvsend and ask for it, since it has to be
+      submitted to and maintained on the AUR (the template in `packaging/aur` is ready)
 - [ ] `tvsend update` points to the package manager when installed through one
 - [ ] Decide on other channels (PyPI for `uv tool install` / `pipx`, Nix, Scoop is
       out while Windows is unsupported); `SPEC.md` currently says no PyPI package
@@ -126,3 +120,6 @@ Parked on the branch `wip/background-player` (unfinished, untested).
 - [x] `tvsend reset`
 - [x] Release flow: version script, tag-driven release workflow, build-only run by hand
 - [x] Fix: player failed on Python 3.13 (`_thread._ThreadHandle object is not callable`)
+- [x] README checked against the code for going public; contact address filled in
+- [x] Repository public, private vulnerability reporting on; `install.sh` checked
+      without a login

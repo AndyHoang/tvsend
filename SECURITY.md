@@ -12,8 +12,6 @@ reporting instead: on the repository page, open the **Security** tab and choose
 (<https://github.com/AndyHoang/tvsend/security/advisories/new>).
 If you cannot use GitHub, email ngocdunghoangdl@gmail.com instead.
 
-<!-- TODO(owner): turn on "Private vulnerability reporting" in the repository settings when it goes public. -->
-
 Include the tvsend version, your operating system, and the steps that show the problem.
 You can expect a first answer within a week.
 
