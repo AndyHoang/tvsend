@@ -10,6 +10,7 @@ Please do not open a public issue for a security problem. Use GitHub's private
 reporting instead: on the repository page, open the **Security** tab and choose
 **Report a vulnerability**
 (<https://github.com/AndyHoang/tvsend/security/advisories/new>).
+If you cannot use GitHub, email ngocdunghoangdl@gmail.com instead.
 
 <!-- TODO(owner): turn on "Private vulnerability reporting" in the repository settings when it goes public. -->
 

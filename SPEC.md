@@ -26,7 +26,7 @@ the TV in under two minutes without reading documentation.
 | Platforms | Linux and macOS. Windows: not supported, not tested |
 | Binary targets | Linux x86_64, Linux arm64, macOS Apple Silicon, macOS Intel |
 | Python (source) | 3.10 and newer |
-| TV protocol | DLNA in version 1. Code is split so AirPlay and Chromecast can be added as back-ends later |
+| TV protocol | DLNA in version 1. Chromecast is the next milestone, as a second back-end. AirPlay later |
 | ffmpeg / ffprobe | Not used at all. No "Will the TV play it?" check, no convert |
 | File types listed | mp4, m4v, mov, mkv, webm, avi, ts. Played as requested; if the TV refuses a file, the app says so and moves on |
 | Personal rules | Removed: raw-camera hiding (`TN_*`, above 60 Mbps), "risky" skipping, `tmp_` prefix. Kept: files still being written are not listed |
@@ -42,10 +42,10 @@ the TV in under two minutes without reading documentation.
 | Sub-folders | Videos in sub-folders of the folder are listed too |
 | macOS testing | Done by the author on their own Mac before each release |
 | macOS signing | Unsigned (no Apple developer certificate) |
-| Subtitles | Not planned |
+| Subtitles | Next milestone: a `.srt`/`.vtt` file next to the video, served with it. Subtitles inside the video file are out of scope (no ffmpeg) |
 | Onboarding | Full-screen 4-step wizard on first run; `tvsend setup` repeats it |
 | Firewall | Tested during setup. If blocked: show the exact command and, in first-time setup, offer to run it |
-| Install channels | GitHub Releases, install script, `tvsend update`. Homebrew tap and AUR `tvsend-bin` later, once they are registered (templates are kept in `packaging/`) |
+| Install channels | GitHub Releases, install script, `tvsend update`. Homebrew tap and AUR `tvsend-bin` in the next milestone, once they are registered (templates are kept in `packaging/`) |
 | Repo standards | README with demo and release automation first; CI, tests and community files in a later phase |
 
 ## 3. Commands
@@ -196,8 +196,9 @@ home addresses and names. What was taken from it:
 4. **Shipping.** PyInstaller builds, release workflow, install script, `tvsend update`,
    README with terminal recording, MIT licence, CHANGELOG. First private release,
    tested on Linux and macOS, then the repo goes public.
-5. **Channels (later).** Homebrew tap and AUR `tvsend-bin`, once registered; the release
-   workflow gets the two jobs back then.
+5. **Next milestone: Chromecast, subtitles, distribution.** A Chromecast back-end, subtitle
+   files next to the video, and the Homebrew tap and AUR `tvsend-bin` once registered (the
+   release workflow gets the two jobs back then). Task list in `MILESTONES.md`.
 6. **Persistence (after user feedback).** Background player, local socket, saved
    session, automatic continue.
 7. **Project hygiene.** CI (ruff, pytest on Python 3.10-3.14, Linux and macOS, with a

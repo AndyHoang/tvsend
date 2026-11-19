@@ -1,51 +1,63 @@
 # tvsend
 
+[![CI](https://github.com/AndyHoang/tvsend/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/AndyHoang/tvsend/actions/workflows/ci.yml)
+[![Package check](https://github.com/AndyHoang/tvsend/actions/workflows/package.yml/badge.svg)](https://github.com/AndyHoang/tvsend/actions/workflows/package.yml)
+[![Latest release](https://img.shields.io/github/v/release/AndyHoang/tvsend?include_prereleases&sort=semver)](https://github.com/AndyHoang/tvsend/releases/latest)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13%20%7C%203.14-blue)](pyproject.toml)
+[![Platforms](https://img.shields.io/badge/platforms-Linux%20%7C%20macOS-lightgrey)](#install)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+
 Send video files from your terminal to a TV on your home network: pick a clip from a
 list, press Enter, and it plays on the TV.
 
-<!-- TODO(owner): replace this line with the terminal recording (GIF) once it is recorded. -->
-_Terminal recording: to be added._
-
 ## Install
 
-tvsend is at an early test stage: there is no public release yet.
+tvsend is a single file with everything inside; no Python needed. It runs on Linux
+(x86_64, arm64) and macOS (Apple Silicon, Intel).
 
-**From source** (works today; needs [uv](https://docs.astral.sh/uv/) and access to the
-repository):
-
-```sh
-git clone git@github.com:AndyHoang/tvsend.git && cd tvsend
-uv run tvsend
-```
-
-In the rest of this page, `tvsend` stands for `uv run tvsend` when you run from source.
-
-**Standalone binary** (from the first public release on): one file with everything
-inside, no Python needed, for Linux (x86_64, arm64) and macOS (Apple Silicon, Intel).
-
-- Install script, which puts `tvsend` in `~/.local/bin`:
-
-  ```sh
-  curl -fsSL https://raw.githubusercontent.com/AndyHoang/tvsend/main/install.sh | sh
-  ```
-
-- Or take the file for your system from the
-  [Releases page](https://github.com/AndyHoang/tvsend/releases), make it executable
-  (`chmod +x tvsend`) and move it to a folder on your `PATH`. Each release lists
-  SHA-256 checksums.
-
-On macOS the binary is not signed. A file downloaded with a browser is blocked until
-you clear the block once (the install script does not trigger this block):
+**Install script** - puts `tvsend` in `~/.local/bin` and checks the download against
+the release's `SHA256SUMS`:
 
 ```sh
-xattr -d com.apple.quarantine tvsend
+curl -fsSL https://raw.githubusercontent.com/AndyHoang/tvsend/main/install.sh | sh
 ```
 
-To update a binary later: `tvsend update`.
+To read the script before running it:
 
-**Not in this version:** the background player. Closing tvsend stops the TV, and an
-interrupted session is not continued; parts of this page that say otherwise describe
-the plan. It comes in a later version, after first user feedback.
+```sh
+curl -fsSLO https://raw.githubusercontent.com/AndyHoang/tvsend/main/install.sh
+less install.sh
+sh install.sh
+```
+
+`TVSEND_INSTALL_DIR` picks another folder and `TVSEND_VERSION` a given version
+(for example `TVSEND_VERSION=0.1.0 sh install.sh`). If the folder is not on your
+`PATH`, the script says how to add it.
+
+**By hand** - take the file for your system and `SHA256SUMS` from the
+[Releases page](https://github.com/AndyHoang/tvsend/releases), check it, make it
+executable and move it to a folder on your `PATH`:
+
+```sh
+shasum -a 256 -c SHA256SUMS --ignore-missing    # Linux: sha256sum -c --ignore-missing SHA256SUMS
+xattr -d com.apple.quarantine tvsend-macos-arm64  # macOS only, see below
+chmod +x tvsend-macos-arm64 && mv tvsend-macos-arm64 ~/.local/bin/tvsend
+```
+
+The checksum shows the file arrived intact; the binaries are not signed. That is why
+macOS blocks a file downloaded with a browser until the `xattr` line above clears the
+block (or allow it under System Settings -> Privacy & Security -> "Open Anyway"). The
+install script does not trigger this block.
+
+If macOS asks whether tvsend may find devices on your local network, allow it, or the
+TV is not found.
+
+To update later: `tvsend update`.
+
+**From source** (needs [uv](https://docs.astral.sh/uv/)): see [Development](#development).
+
+**Uninstall:** `tvsend reset --yes` forgets the settings, then remove the binary
+(`rm ~/.local/bin/tvsend`).
 
 ## Quick start
 
@@ -71,13 +83,13 @@ To play one file without the list: `tvsend holiday.mp4`.
 | `tvsend <dir>` | open the list for that folder only, for this run |
 | `tvsend <file>...` | play the file(s) now |
 | `tvsend <url>` | play a direct video link now |
-| `tvsend stop` | stop playback and end the background player |
-| `tvsend status` | what the TV is doing, what is next |
+| `tvsend stop` | stop playback on the TV |
+| `tvsend status` | what the TV is playing, and where |
 | `tvsend setup` | run the setup steps again |
-| `tvsend reset` | forget all settings and start fresh (your videos are not touched) |
+| `tvsend reset` | forget all settings and start fresh (your videos are not touched); `--yes` skips the question |
 | `tvsend tv` | list saved TVs, add one, choose the default |
 | `tvsend doctor` | check TV reachability, file server and firewall; print a report |
-| `tvsend update` | replace the binary with the newest release |
+| `tvsend update` | replace the binary with the newest release (binary installs only) |
 | `tvsend --version`, `tvsend --help` | version, short help |
 
 An argument is treated as a folder, a file or a link by looking at it. `tvsend <dir>`
@@ -99,6 +111,10 @@ the same name as a command, write it as a path (`tvsend ./stop`).
 | Space | mark / unmark clips to play only those |
 | `t` | switch to another saved TV |
 | `f` | change the saved folder |
+| Backspace | up one folder |
+| `h` | back to the saved folder |
+| `R` | refresh the list now |
+| `j` / `k` | down / up |
 | `?` | show all keys |
 | `q` | quit the list |
 
@@ -109,11 +125,7 @@ Good to know:
 - Videos in sub-folders are listed too. Hidden folders are skipped.
 - The list refreshes by itself; files still being written are left out until they settle.
 - The highlight follows the clip that is on the TV.
-- Closing the list or the terminal does not stop the TV: a background player keeps the
-  queue going. Open `tvsend` again to see what is playing and what is next.
-  `s` or `tvsend stop` ends it.
-- After an interruption (reboot, crash, TV switched off), opening `tvsend` continues the
-  queue where it was. After a deliberate stop it does not.
+- Playback needs tvsend open: closing the list stops the TV.
 - If the TV refuses a file, tvsend says so and moves on to the next clip.
 
 ## How it works
@@ -126,14 +138,18 @@ Good to know:
 - It does not use ffmpeg and does not look inside or convert files: the TV plays the
   file as it is.
 - No telemetry. The only connection outside your home network is the update check to
-  GitHub, at most once a day; `check_updates = false` in the config file turns it off.
+  GitHub, at most once a day and only in the standalone binary; `check_updates = false`
+  in the config file turns it off.
 
-Settings are kept in `~/.config/tvsend/config.toml`.
+Settings are kept in `~/.config/tvsend/config.toml` (or under `$XDG_CONFIG_HOME`), on
+macOS too. tvsend also keeps a little state in `~/.local/state/tvsend` and a cache in
+`~/.cache/tvsend`.
 
 ## Supported
 
 - **Systems:** Linux and macOS.
-- **TVs:** TVs that accept video over DLNA (most Samsung, LG, Sony and Philips smart TVs).
+- **TVs:** TVs that accept video over DLNA, which most smart TVs do. Tested on Samsung;
+  reports from other brands are welcome.
 - **Files:** mp4, m4v, mov, mkv, webm, avi, ts. Whether a given file plays depends on
   the TV.
 - **Links:** direct links to a video file (`http://` or `https://`).
@@ -143,7 +159,8 @@ Not supported:
 - Windows.
 - YouTube and other streaming-site links.
 - Subtitles.
-- AirPlay and Chromecast (not yet; the code is laid out so they can be added).
+- Chromecast (planned) and AirPlay.
+- Keeping the queue playing after tvsend closes (planned).
 
 ## Troubleshooting
 
@@ -158,7 +175,8 @@ again or `m` to type the TV's address (for example `192.0.2.20`). Some TVs need
 **The connection test fails or the clip never starts.**
 A firewall on your computer is probably blocking the TV. `tvsend setup` and
 `tvsend doctor` show the exact command for your firewall, limited to the TV's address
-and the one port tvsend uses (8765 by default). Example for ufw, with a computer at
+and the one port tvsend uses (8765 by default). The macOS firewall works per program
+rather than per address, so there the command allows tvsend itself. Example for ufw, with a computer at
 `192.0.2.10` and a TV at `192.0.2.20`:
 
 ```sh
@@ -191,8 +209,10 @@ uv run pytest         # tests (they use a fake TV, no device needed)
 uv run ruff check     # lint
 ```
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for more, and [SPEC.md](SPEC.md) for what the app
-is meant to do.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for more, [SPEC.md](SPEC.md) for what the app is
+meant to do, and [MILESTONES.md](MILESTONES.md) for what comes next. Report security
+problems as described in [SECURITY.md](SECURITY.md); everyone taking part follows the
+[Code of Conduct](CODE_OF_CONDUCT.md).
 
 ## Licence
 

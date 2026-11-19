@@ -17,8 +17,7 @@ discussions and any other place where the project is represented.
 
 If someone's behaviour is unacceptable, report it to the project maintainer:
 
-<!-- TODO(owner): add a contact address for conduct reports before the repository goes public. -->
-**Contact: to be added by the maintainer.**
+**Contact: ngocdunghoangdl@gmail.com**
 
 Reports are handled confidentially. The maintainer may remove comments, commits and
 other contributions that break this code, and may block people who repeatedly or
