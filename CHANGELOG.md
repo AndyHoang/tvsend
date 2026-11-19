@@ -6,6 +6,11 @@ All notable changes to tvsend are written here. The format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- macOS: `tvsend update` and the daily update check failed with "certificate verify
+  failed": the standalone binary now uses the system's trusted certificates.
+
 ## [0.1.0] - 2026-11-15
 
 First version.

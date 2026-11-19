@@ -9,6 +9,7 @@ import json
 import os
 import platform
 import shutil
+import ssl
 import stat
 import subprocess
 import sys
@@ -23,6 +24,15 @@ LATEST_URL = os.environ.get("TVSEND_UPDATE_URL") or "https://api.github.com/repo
 CHECKSUMS = "SHA256SUMS"
 CHECK_EVERY = 24 * 3600  # seconds between automatic checks
 MAX_BINARY = 300_000_000  # bytes; refuse anything absurd
+# Where systems keep their trusted certificates. The Python bundled in the standalone
+# binary looks for them in a place that does not exist on macOS, so without this every
+# https request fails with CERTIFICATE_VERIFY_FAILED.
+CA_FILES = (
+    "/etc/ssl/cert.pem",  # macOS, Alpine, Arch
+    "/etc/ssl/certs/ca-certificates.crt",  # Debian, Ubuntu
+    "/etc/pki/tls/certs/ca-bundle.crt",  # Fedora, RHEL
+    "/etc/ssl/ca-bundle.pem",  # openSUSE
+)
 
 
 class UpdateError(Exception):
@@ -39,11 +49,22 @@ def asset_name() -> str:
     return "tvsend-%s-%s" % (system, arch)
 
 
+def tls_context() -> ssl.SSLContext:
+    """Python's usual checks, plus the system's certificate file when Python found none."""
+    ctx = ssl.create_default_context()
+    if not ctx.cert_store_stats()["x509_ca"]:
+        for path in CA_FILES:
+            if os.path.isfile(path):
+                ctx.load_verify_locations(cafile=path)
+                break
+    return ctx
+
+
 def _get(url: str, timeout: float, limit: int = 5_000_000) -> bytes:
     req = urllib.request.Request(
         url, headers={"User-Agent": "tvsend/%s" % __version__, "Accept": "application/vnd.github+json"}
     )
-    with urllib.request.urlopen(req, timeout=timeout) as r:
+    with urllib.request.urlopen(req, timeout=timeout, context=tls_context()) as r:
         data = r.read(limit + 1)
     if len(data) > limit:
         raise UpdateError("the download from %s is larger than expected" % url)
