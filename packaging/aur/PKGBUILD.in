@@ -7,9 +7,12 @@ pkgdesc="Send video files from your terminal to a TV on your home network"
 arch=('x86_64' 'aarch64')
 url="https://github.com/AndyHoang/tvsend"
 license=('MIT')
+depends=('glibc' 'zlib')  # all the bundled program needs from the system
 provides=('tvsend')
 conflicts=('tvsend')
-options=('!strip')  # a PyInstaller binary carries its payload after the program; stripping breaks it
+# a PyInstaller binary carries its payload after the program: stripping it, or splitting
+# out debug symbols, breaks it
+options=('!strip' '!debug')
 source=("LICENSE-$pkgver::https://raw.githubusercontent.com/AndyHoang/tvsend/v$pkgver/LICENSE")
 source_x86_64=("tvsend-$pkgver-x86_64::https://github.com/AndyHoang/tvsend/releases/download/v$pkgver/tvsend-linux-x86_64")
 source_aarch64=("tvsend-$pkgver-aarch64::https://github.com/AndyHoang/tvsend/releases/download/v$pkgver/tvsend-linux-arm64")

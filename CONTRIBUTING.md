@@ -58,9 +58,17 @@ Versions follow [semantic versioning](https://semver.org): `MAJOR.MINOR.PATCH`, 
 place, `src/tvsend/__init__.py`, and every release is a git tag `v<version>`.
 
 - **Every push and pull request** runs the CI workflow: lint, and the tests on Python
-  3.10 to 3.14 on Linux and macOS. No binaries are built there.
+  3.10 to 3.14 on Linux (on macOS only the oldest and newest). No binaries are built there.
+- **Before a release**, start the Package check workflow by hand (Actions -> Package
+  check -> Run workflow, or `gh workflow run package.yml --ref <branch>`). It builds the
+  four binaries without releasing anything, runs each one end to end against the fake
+  TV (`packaging/smoke.py`), scans them for malware (ClamAV), checks the bundled
+  dependencies for known vulnerabilities (pip-audit) and the workflows for security
+  problems (zizmor), and installs the Homebrew formula from `packaging/homebrew`
+  from a local tap. The binaries stay downloadable from the run for a week, to try on real
+  machines. It also runs on pull requests that change packaging or dependencies.
 - **A release** (maintainer) is made by starting the Release workflow by hand; that is
-  the only place binaries are built.
+  the only place binaries are published.
   1. Make sure `CHANGELOG.md` describes the changes under "Unreleased".
   2. On GitHub: Actions -> Release -> Run workflow, and choose `patch`, `minor` or
      `major` (or `current` to release the version already in the source, or type an
